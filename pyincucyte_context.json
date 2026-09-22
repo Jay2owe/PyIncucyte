@@ -1,0 +1,123 @@
+{
+  "package": "pyincucyte",
+  "version": "0.3.1",
+  "reader_contract": {
+    "python": "from pyincucyte import context; context.read(topic=None, format='text')",
+    "search": "context.search(query, limit=5)",
+    "runner": "context [topic] or context --search <query>",
+    "read_only": true
+  },
+  "topics": [
+    {
+      "ok": true,
+      "package": "pyincucyte",
+      "version": "0.3.1",
+      "topic": "connect-and-discover",
+      "title": "Connect and identify a vessel",
+      "description": "Check the instrument, list vessels, and resolve the exact plate before planning.",
+      "content": "PyIncucyte asks an Incucyte instrument what vessels and scans exist, previews selected wells, plans downloads, and writes ImageJ-compatible TIFFs with a manifest.\n\nThe agent control boundary is headless and JSON-based. Use `probe_device`, `list_vessels`, `find_vessels`, or `find_scans` to ground identity; use `plan_download` before writing; then use `download` or `watch_once`. `preview` and `protocol` are read-only inspection workflows.\n\nThe runner can use a saved login, or an explicit `host` in request parameters. It never asks for a password through JSON. Login remains an existing CLI or GUI operation. The runner request's top-level `root` is an optional disposable credential-store directory for tests or isolated profiles, not an image source.\n\nDownload and watch actions write only the requested output folder, its manifest/index, cache, and resume ledger.\n\nThe machine must already have a saved PyIncucyte login, or the request must provide the instrument `host`. Use the existing `pyincucyte login` command or GUI for credential setup; do not put passwords in an agent request.\n\n```python\nfrom pyincucyte import IncucyteClient\n\nwith IncucyteClient.from_saved(\"incucyte.example\") as incucyte:\n    print(incucyte.probe())\n    for vessel in incucyte.find_vessels(name=\"Cry1\"):\n        print(vessel.to_dict())\n```\n\nUse `find_scans` when the question is about usable image-bearing scans rather than vessel metadata. IDs and scan times returned by discovery are the only identifiers to pass to later actions; do not infer them from a plate label.",
+      "prerequisites": [
+        "overview"
+      ],
+      "related_topics": [
+        "plan-and-download",
+        "troubleshooting"
+      ]
+    },
+    {
+      "ok": true,
+      "package": "pyincucyte",
+      "version": "0.3.1",
+      "topic": "overview",
+      "title": "PyIncucyte overview",
+      "description": "Inspect, preview, plan, and download live-cell images from an Incucyte instrument.",
+      "content": "PyIncucyte asks an Incucyte instrument what vessels and scans exist, previews selected wells, plans downloads, and writes ImageJ-compatible TIFFs with a manifest.\n\nThe agent control boundary is headless and JSON-based. Use `probe_device`, `list_vessels`, `find_vessels`, or `find_scans` to ground identity; use `plan_download` before writing; then use `download` or `watch_once`. `preview` and `protocol` are read-only inspection workflows.\n\nThe runner can use a saved login, or an explicit `host` in request parameters. It never asks for a password through JSON. Login remains an existing CLI or GUI operation. The runner request's top-level `root` is an optional disposable credential-store directory for tests or isolated profiles, not an image source.\n\nDownload and watch actions write only the requested output folder, its manifest/index, cache, and resume ledger.",
+      "prerequisites": [],
+      "related_topics": [
+        "connect-and-discover",
+        "plan-and-download",
+        "troubleshooting"
+      ]
+    },
+    {
+      "ok": true,
+      "package": "pyincucyte",
+      "version": "0.3.1",
+      "topic": "plan-and-download",
+      "title": "Plan and download images",
+      "description": "Preview output count and bytes before writing a resumable download.",
+      "content": "PyIncucyte asks an Incucyte instrument what vessels and scans exist, previews selected wells, plans downloads, and writes ImageJ-compatible TIFFs with a manifest.\n\nThe agent control boundary is headless and JSON-based. Use `probe_device`, `list_vessels`, `find_vessels`, or `find_scans` to ground identity; use `plan_download` before writing; then use `download` or `watch_once`. `preview` and `protocol` are read-only inspection workflows.\n\nThe runner can use a saved login, or an explicit `host` in request parameters. It never asks for a password through JSON. Login remains an existing CLI or GUI operation. The runner request's top-level `root` is an optional disposable credential-store directory for tests or isolated profiles, not an image source.\n\nDownload and watch actions write only the requested output folder, its manifest/index, cache, and resume ledger.\n\nThe machine must already have a saved PyIncucyte login, or the request must provide the instrument `host`. Use the existing `pyincucyte login` command or GUI for credential setup; do not put passwords in an agent request.\n\n```python\nfrom pyincucyte import IncucyteClient\n\nwith IncucyteClient.from_saved(\"incucyte.example\") as incucyte:\n    print(incucyte.probe())\n    for vessel in incucyte.find_vessels(name=\"Cry1\"):\n        print(vessel.to_dict())\n```\n\nUse `find_scans` when the question is about usable image-bearing scans rather than vessel metadata. IDs and scan times returned by discovery are the only identifiers to pass to later actions; do not infer them from a plate label.\n\nA plan asks for metadata and calculates output files, axes, scan times, selected wells/channels, and estimated bytes. It does not write image files.\n\n```python\nfrom pyincucyte import ExportOptions, IncucyteClient\n\noptions = ExportOptions(\n    host=\"incucyte.example\",\n    output=\"./plate-38\",\n    vessels=[38],\n    wells=\"A1-D6\",\n    channels=\"phase,green\",\n    layout=\"time_stack\",\n    start_from=\"first\",\n)\nwith IncucyteClient.from_saved(options.host) as incucyte:\n    plan = incucyte.plan(options)\n    print(plan.to_dict())\n    result = incucyte.fetch(options)\n    print(result.to_dict())\n```\n\nLayouts are `separate` (one image per well/channel/time), `channel_stack`, `time_stack`, and `time_channel_stack`. Choose the layout from the downstream axes requirement, not from filename preference. A successful result reports files, bytes, manifest path, and errors. Repeating the same recipe uses the resume ledger and source cache where configured.",
+      "prerequisites": [
+        "connect-and-discover"
+      ],
+      "related_topics": [
+        "watch-once",
+        "troubleshooting"
+      ]
+    },
+    {
+      "ok": true,
+      "package": "pyincucyte",
+      "version": "0.3.1",
+      "topic": "preview",
+      "title": "Preview wells and channels",
+      "description": "Fetch bounded thumbnails to check a vessel, well selection, channel, or processing recipe.",
+      "content": "PyIncucyte asks an Incucyte instrument what vessels and scans exist, previews selected wells, plans downloads, and writes ImageJ-compatible TIFFs with a manifest.\n\nThe agent control boundary is headless and JSON-based. Use `probe_device`, `list_vessels`, `find_vessels`, or `find_scans` to ground identity; use `plan_download` before writing; then use `download` or `watch_once`. `preview` and `protocol` are read-only inspection workflows.\n\nThe runner can use a saved login, or an explicit `host` in request parameters. It never asks for a password through JSON. Login remains an existing CLI or GUI operation. The runner request's top-level `root` is an optional disposable credential-store directory for tests or isolated profiles, not an image source.\n\nDownload and watch actions write only the requested output folder, its manifest/index, cache, and resume ledger.\n\nThe machine must already have a saved PyIncucyte login, or the request must provide the instrument `host`. Use the existing `pyincucyte login` command or GUI for credential setup; do not put passwords in an agent request.\n\n```python\nfrom pyincucyte import IncucyteClient\n\nwith IncucyteClient.from_saved(\"incucyte.example\") as incucyte:\n    print(incucyte.probe())\n    for vessel in incucyte.find_vessels(name=\"Cry1\"):\n        print(vessel.to_dict())\n```\n\nUse `find_scans` when the question is about usable image-bearing scans rather than vessel metadata. IDs and scan times returned by discovery are the only identifiers to pass to later actions; do not infer them from a plate label.\n\nUse `preview` before downloading when you need to verify that the selected vessel, wells, channels, or processing recipe is correct. The structured result contains thumbnail metadata and errors; it does not replace quantitative analysis.\n\n```python\nwith IncucyteClient.from_saved(\"incucyte.example\") as incucyte:\n    previews = incucyte.preview(vessel=38, wells=\"A1-B3\", channels=\"phase\")\n    print(previews.to_dict())\n```\n\n`calibrate`, `background`, and `unmix` use the same recipe vocabulary as downloads. Treat display contrast as a recognition aid. Use the result's reported wells and channel names to confirm the request before a write.",
+      "prerequisites": [
+        "connect-and-discover"
+      ],
+      "related_topics": [
+        "plan-and-download",
+        "protocol"
+      ]
+    },
+    {
+      "ok": true,
+      "package": "pyincucyte",
+      "version": "0.3.1",
+      "topic": "protocol",
+      "title": "Read the acquisition protocol",
+      "description": "Inspect the plate layout, channels, exposure/stare settings, cadence, and progress.",
+      "content": "PyIncucyte asks an Incucyte instrument what vessels and scans exist, previews selected wells, plans downloads, and writes ImageJ-compatible TIFFs with a manifest.\n\nThe agent control boundary is headless and JSON-based. Use `probe_device`, `list_vessels`, `find_vessels`, or `find_scans` to ground identity; use `plan_download` before writing; then use `download` or `watch_once`. `preview` and `protocol` are read-only inspection workflows.\n\nThe runner can use a saved login, or an explicit `host` in request parameters. It never asks for a password through JSON. Login remains an existing CLI or GUI operation. The runner request's top-level `root` is an optional disposable credential-store directory for tests or isolated profiles, not an image source.\n\nDownload and watch actions write only the requested output folder, its manifest/index, cache, and resume ledger.\n\nThe machine must already have a saved PyIncucyte login, or the request must provide the instrument `host`. Use the existing `pyincucyte login` command or GUI for credential setup; do not put passwords in an agent request.\n\n```python\nfrom pyincucyte import IncucyteClient\n\nwith IncucyteClient.from_saved(\"incucyte.example\") as incucyte:\n    print(incucyte.probe())\n    for vessel in incucyte.find_vessels(name=\"Cry1\"):\n        print(vessel.to_dict())\n```\n\nUse `find_scans` when the question is about usable image-bearing scans rather than vessel metadata. IDs and scan times returned by discovery are the only identifiers to pass to later actions; do not infer them from a plate label.\n\n`protocol` reads metadata and scan information without downloading image pixels. It reports the requested acquisition design separately from the achieved interval and current progress.\n\n```python\nwith IncucyteClient.from_saved(\"incucyte.example\") as incucyte:\n    protocol = incucyte.protocol(vessel=38, scan=False)\n    print(protocol.to_dict())\n    protocol.save(\"./vessel-38-protocol.svg\")\n```\n\nUse `scan=False` for a fast plan-only description. Use the default scan-aware form when achieved cadence or live status matters.",
+      "prerequisites": [
+        "connect-and-discover"
+      ],
+      "related_topics": [
+        "preview",
+        "troubleshooting"
+      ]
+    },
+    {
+      "ok": true,
+      "package": "pyincucyte",
+      "version": "0.3.1",
+      "topic": "troubleshooting",
+      "title": "PyIncucyte troubleshooting",
+      "description": "Recognise common login, host, scan, output, and selection problems.",
+      "content": "PyIncucyte asks an Incucyte instrument what vessels and scans exist, previews selected wells, plans downloads, and writes ImageJ-compatible TIFFs with a manifest.\n\nThe agent control boundary is headless and JSON-based. Use `probe_device`, `list_vessels`, `find_vessels`, or `find_scans` to ground identity; use `plan_download` before writing; then use `download` or `watch_once`. `preview` and `protocol` are read-only inspection workflows.\n\nThe runner can use a saved login, or an explicit `host` in request parameters. It never asks for a password through JSON. Login remains an existing CLI or GUI operation. The runner request's top-level `root` is an optional disposable credential-store directory for tests or isolated profiles, not an image source.\n\nDownload and watch actions write only the requested output folder, its manifest/index, cache, and resume ledger.\n\nIf the runner reports `HostNotSetError`, pass an explicit `host` or select a saved device. If it reports `NotLoggedInError`, complete the existing login workflow on that machine and retry `probe_device`; do not send a password through JSON.\n\nIf the device is unreachable, check the internal network route and rerun `probe_device`. A successful login does not prove the current network route is available.\n\nIf a vessel search returns nothing, broaden `find_vessels` by removing optional owner, plate, or channel filters, then use the returned ID. If `find_scans` returns nothing, the vessel may not have a usable image-bearing scan in the requested date window; inspect its first/last scan metadata and widen the window deliberately.\n\nIf `plan_download` rejects the request, check that an output folder, at least one vessel, and valid channels/layout are present. If a download returns errors, inspect the per-file errors and manifest path before retrying; a failed call can still have written earlier files.",
+      "prerequisites": [
+        "overview"
+      ],
+      "related_topics": [
+        "connect-and-discover",
+        "plan-and-download",
+        "watch-once"
+      ]
+    },
+    {
+      "ok": true,
+      "package": "pyincucyte",
+      "version": "0.3.1",
+      "topic": "watch-once",
+      "title": "Download new scans once",
+      "description": "Run one resumable poll for a scheduler or repeated agent call without leaving a worker running.",
+      "content": "PyIncucyte asks an Incucyte instrument what vessels and scans exist, previews selected wells, plans downloads, and writes ImageJ-compatible TIFFs with a manifest.\n\nThe agent control boundary is headless and JSON-based. Use `probe_device`, `list_vessels`, `find_vessels`, or `find_scans` to ground identity; use `plan_download` before writing; then use `download` or `watch_once`. `preview` and `protocol` are read-only inspection workflows.\n\nThe runner can use a saved login, or an explicit `host` in request parameters. It never asks for a password through JSON. Login remains an existing CLI or GUI operation. The runner request's top-level `root` is an optional disposable credential-store directory for tests or isolated profiles, not an image source.\n\nDownload and watch actions write only the requested output folder, its manifest/index, cache, and resume ledger.\n\nThe machine must already have a saved PyIncucyte login, or the request must provide the instrument `host`. Use the existing `pyincucyte login` command or GUI for credential setup; do not put passwords in an agent request.\n\n```python\nfrom pyincucyte import IncucyteClient\n\nwith IncucyteClient.from_saved(\"incucyte.example\") as incucyte:\n    print(incucyte.probe())\n    for vessel in incucyte.find_vessels(name=\"Cry1\"):\n        print(vessel.to_dict())\n```\n\nUse `find_scans` when the question is about usable image-bearing scans rather than vessel metadata. IDs and scan times returned by discovery are the only identifiers to pass to later actions; do not infer them from a plate label.\n\nA plan asks for metadata and calculates output files, axes, scan times, selected wells/channels, and estimated bytes. It does not write image files.\n\n```python\nfrom pyincucyte import ExportOptions, IncucyteClient\n\noptions = ExportOptions(\n    host=\"incucyte.example\",\n    output=\"./plate-38\",\n    vessels=[38],\n    wells=\"A1-D6\",\n    channels=\"phase,green\",\n    layout=\"time_stack\",\n    start_from=\"first\",\n)\nwith IncucyteClient.from_saved(options.host) as incucyte:\n    plan = incucyte.plan(options)\n    print(plan.to_dict())\n    result = incucyte.fetch(options)\n    print(result.to_dict())\n```\n\nLayouts are `separate` (one image per well/channel/time), `channel_stack`, `time_stack`, and `time_channel_stack`. Choose the layout from the downstream axes requirement, not from filename preference. A successful result reports files, bytes, manifest path, and errors. Repeating the same recipe uses the resume ledger and source cache where configured.\n\nUse `watch_once` when another scheduler or automation system will invoke PyIncucyte repeatedly. It performs one poll, applies the configured time window and batching rule, writes eligible new scans, and returns. It does not leave a resident process running.\n\n```python\nwith IncucyteClient.from_saved(\"incucyte.example\") as incucyte:\n    result = incucyte.watch_once(\n        vessel=38,\n        output=\"./plate-38\",\n        channels=\"phase,green\",\n        batch_after=\"7d\",\n    )\n    print(result.to_dict())\n```\n\nA held batch is a normal outcome: no files should be written until the frame-count or age rule is met. Check `file_count`, `errors`, and `device_status` before deciding whether another call is needed.",
+      "prerequisites": [
+        "plan-and-download"
+      ],
+      "related_topics": [
+        "troubleshooting"
+      ]
+    }
+  ]
+}

@@ -29,6 +29,11 @@ pip install PyIncucyte             # from PyPI
 pip install -e .                   # from this checkout
 ```
 
+Windows users can also install the desktop application from the GitHub release
+page with `PyIncucyte-<version>-Setup.exe`; the portable ZIP is provided beside
+it. The Python package, ZIP, and installer are built from one release commit
+and checked for version parity.
+
 One name throughout: the distribution, the import name and the command are all
 `pyincucyte`. The desktop app is a module inside it, so `pyincucyte gui` and
 `pyincucyte download ...` are the same program.
@@ -219,6 +224,22 @@ still works.
 ## The Python API
 
 This is the part an automated pipeline should use.
+
+### AI control
+
+The public, read-only guide is available without contacting the instrument:
+
+```python
+from pyincucyte import context
+
+print(context.read())
+print(context.search("preview"))
+```
+
+Agents can discover and run the same headless actions through
+`.claude/skills/pyincucyte/scripts/pyincucyte_runner.py` or the Codex bridge at
+`.codex/skills/pyincucyte/scripts/pyincucyte_runner.py`. The portable copies
+are `README_AI.md` and `pyincucyte_context.json`.
 
 For a single pull or scheduled poll, the package-level helpers match PyLV200:
 

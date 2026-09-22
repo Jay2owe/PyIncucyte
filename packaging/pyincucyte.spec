@@ -29,6 +29,7 @@ frozen build lands in the right place without a code change.
 """
 
 from pathlib import Path
+import os
 
 APP_NAME = "PyIncucyte"
 SPEC_DIR = Path(SPECPATH)
@@ -89,6 +90,7 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=str(SPEC_DIR / "app.ico") if (SPEC_DIR / "app.ico").is_file() else None,
+    version=os.environ.get("PYINCUCYTE_VERSION_INFO"),
 )
 
 coll = COLLECT(

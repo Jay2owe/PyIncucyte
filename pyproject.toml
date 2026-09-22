@@ -54,6 +54,10 @@ dev = [
     "twine>=5.0",
     "pytest>=8.0",
 ]
+release = [
+    "build>=1.2",
+    "pyinstaller>=6.0,<7",
+]
 
 [project.urls]
 Homepage = "https://github.com/Jay2owe/PyIncucyte"
@@ -67,6 +71,9 @@ pyincucyte-gui = "pyincucyte.gui:main"
 
 [tool.setuptools.packages.find]
 include = ["pyincucyte*"]
+
+[tool.setuptools.package-data]
+pyincucyte = ["README_AI.md", "pyincucyte_context.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

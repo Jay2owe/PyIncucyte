@@ -1,0 +1,3 @@
+include README_AI.md
+include pyincucyte_context.json
+recursive-include pyincucyte README_AI.md pyincucyte_context.json
