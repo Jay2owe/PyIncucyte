@@ -60,6 +60,12 @@ jobs:
         with:
           name: pyincucyte-release-set
           path: release
+      - name: Flatten downloaded release set
+        shell: bash
+        run: |
+          root="$(dirname "$(find release -name release-manifest.json -print -quit)")"
+          test -n "$root" -a -f "$root/release-manifest.json"
+          if [ "$root" != "release" ]; then cp -a "$root"/. release/; fi
       - name: Verify release identity and hashes
         env:
           TAG: ${{ github.ref_name }}
