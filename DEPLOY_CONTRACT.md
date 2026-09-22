@@ -45,9 +45,16 @@ the standalone GUI remains the default when no argument is supplied.
    Windows.
 3. Stage the exact wheel, source distribution, portable ZIP, installer,
    manifest, checksums, and notes on the draft GitHub release.
-4. Publish the Python files to Python Package Index and verify their hashes.
+4. Copy only the wheel and source distribution into a clean Python Package
+   Index upload directory; publish from that directory and verify their hashes.
 5. Publish the GitHub release only after the Python and Windows files still
    match the local manifest.
+
+The Python Package Index upload directory must contain exactly one wheel and one
+source distribution. It must not contain the release manifest, checksums, notes,
+Windows directory, installer, or nested version directory. First-time GitHub
+OpenID Connect trusted publishing uses the exact repository, `release.yml`
+workflow filename, and `pypi` environment.
 
 Never rebuild or replace a published version under the same tag. If a channel
 fails, keep the release incomplete and resume from the retained release set.
