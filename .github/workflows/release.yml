@@ -97,10 +97,16 @@ jobs:
             done
             test "$remote_digest" = "$local_digest" || { echo "GitHub asset hash mismatch: $name" >&2; exit 1; }
           done
+      - name: Prepare Python distributions
+        shell: bash
+        run: |
+          rm -rf pypi
+          mkdir pypi
+          cp release/*.whl release/*.tar.gz pypi/
       - name: Publish Python files
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: release
+          packages-dir: pypi
           skip-existing: true
       - name: Verify PyPI file hashes
         env:

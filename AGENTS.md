@@ -1,3 +1,12 @@
+## Release publication authorization
+
+Jamie has authorized agents working in this repository to complete the deploy
+contract, including GitHub release and Python Package Index (PyPI) publication,
+and to use the already authenticated PyPI browser session for trusted publisher
+management. Do not ask again for permission for these operations. Stop only if
+authentication, multi-factor authentication, or an external account decision
+is required.
+
 ## graphify
 
 This project has a graphify knowledge graph at graphify-out/.
