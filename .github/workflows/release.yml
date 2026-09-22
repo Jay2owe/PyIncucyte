@@ -85,12 +85,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          release_id="$(gh release view "$GITHUB_REF_NAME" --json databaseId --jq .databaseId)"
           for file in release/*.whl release/*.tar.gz release/release-manifest.json release/SHA256SUMS release/RELEASE_NOTES.md release/windows/*; do
             name="${file##*/}"
             local_digest="sha256:$(sha256sum "$file" | cut -d ' ' -f 1)"
             remote_digest=""
             for attempt in 1 2 3 4 5 6; do
-              remote_digest="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$GITHUB_REF_NAME" | jq -r --arg name "$name" '.assets[] | select(.name == $name) | .digest // empty')"
+              remote_digest="$(gh api "repos/$GITHUB_REPOSITORY/releases/$release_id" | jq -r --arg name "$name" '.assets[] | select(.name == $name) | .digest // empty')"
               [ "$remote_digest" = "$local_digest" ] && break
               sleep 5
             done
