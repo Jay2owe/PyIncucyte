@@ -67,8 +67,8 @@ def test_context_read_search_unknown_and_artifact():
 
 def test_both_runner_entrypoints_return_json(tmp_path):
     runners = [
-        Path(__file__).parents[1] / ".claude/skills/pyincucyte/scripts/pyincucyte_runner.py",
-        Path(__file__).parents[1] / ".codex/skills/pyincucyte/scripts/pyincucyte_runner.py",
+        Path(__file__).parents[1] / "tools/pyincucyte_runner.py",
+        Path(__file__).parents[1] / "tools/pyincucyte_runner_bridge.py",
     ]
     for runner in runners:
         completed = subprocess.run(
@@ -81,7 +81,7 @@ def test_both_runner_entrypoints_return_json(tmp_path):
 
 
 def test_bad_runner_json_is_a_clean_error():
-    runner = Path(__file__).parents[1] / ".claude/skills/pyincucyte/scripts/pyincucyte_runner.py"
+    runner = Path(__file__).parents[1] / "tools/pyincucyte_runner.py"
     completed = subprocess.run(
         [sys.executable, str(runner), "run", "not-json"],
         capture_output=True, text=True, check=False,
