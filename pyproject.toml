@@ -49,6 +49,9 @@ dependencies = [
 figure = [
     "matplotlib>=3.7",
 ]
+test = [
+    "pytest>=8.0",
+]
 dev = [
     "build>=1.2",
     "twine>=5.0",
