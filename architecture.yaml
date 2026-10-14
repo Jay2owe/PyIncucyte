@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "project": "PyIncucyte",
+  "profile": "scientific-image-app",
+  "source_root": ".",
+  "required_paths": [
+    "scripts/verify.py",
+    "scripts/project_contract.py",
+    "architecture.schema.json",
+    "architecture.lock.json",
+    "tests",
+    "pyincucyte/actions.py",
+    "pyincucyte/options.py",
+    "pyincucyte/gui/theme.py",
+    "docs/software-performance/README.md",
+    "docs/software-performance/alignment.json"
+  ],
+  "boundaries": [
+    {
+      "id": "instrument-standalone",
+      "sources": [
+        "pyincucyte/*.py",
+        "pyincucyte/gui/*.py"
+      ],
+      "forbidden": [
+        "pymicroglia",
+        "auto_organotypic",
+        "circadian_workbench"
+      ]
+    }
+  ],
+  "components": [],
+  "checks": [
+    {
+      "id": "public-controls-and-state",
+      "kind": "pytest",
+      "argv": [
+        "{python}",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_actions.py",
+        "tests/test_api_parity.py",
+        "tests/test_wells_and_state.py",
+        "tests/test_performance_contracts.py"
+      ],
+      "groups": [
+        "fast"
+      ],
+      "timeout_seconds": 1800,
+      "min_passed": 10
+    },
+    {
+      "id": "complete-regression",
+      "kind": "pytest",
+      "argv": [
+        "{python}",
+        "-m",
+        "pytest",
+        "-q",
+        "tests"
+      ],
+      "groups": [
+        "release"
+      ],
+      "timeout_seconds": 1800,
+      "min_passed": 621,
+      "allow_skips": true,
+      "reason": "Optional local real-acquisition fixtures may be absent in clean clones; required hermetic public-control checks do not permit skips."
+    }
+  ]
+}

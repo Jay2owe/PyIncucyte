@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from . import engine
+from ._atomic import write_json
 from .errors import NotLoggedInError
 
 #: Refresh this many seconds before the token really expires.
@@ -189,9 +190,7 @@ class ConfigStore:
                     for host, record in devices.items()
                 },
             }
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            self.path.write_text(
-                json.dumps(payload, indent=2), encoding="utf-8")
+            write_json(self.path, payload)
         return credentials
 
     def select(self, host):
@@ -209,8 +208,7 @@ class ConfigStore:
                     for address, record in devices.items()
                 },
             }
-            self.path.write_text(
-                json.dumps(payload, indent=2), encoding="utf-8")
+            write_json(self.path, payload)
         return self.load(host)
 
     def clear(self, host=None):
@@ -235,8 +233,7 @@ class ConfigStore:
                     for address, record in devices.items()
                 },
             }
-            self.path.write_text(
-                json.dumps(payload, indent=2), encoding="utf-8")
+            write_json(self.path, payload)
 
     def __repr__(self):
         return f"<ConfigStore {self.path}>"

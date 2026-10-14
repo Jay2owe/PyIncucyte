@@ -364,11 +364,23 @@ def api_post(host, token, route, payload=None, timeout=None):
 
 def unpack_values(obj):
     """Recursively convert .NET $values arrays to Python lists."""
+    # Binary viewer payloads can contain millions of plain integer bytes.
+    # They cannot contain wrappers; keep bools and custom numeric types on
+    # the original path while avoiding two container checks for every byte.
+    if type(obj) is int:
+        return obj
     if isinstance(obj, dict):
         if "$values" in obj:
-            return [unpack_values(v) for v in obj["$values"]]
+            values = obj["$values"]
+            if (type(values) is list and len(values) >= 256
+                    and all(type(v) is int for v in values)):
+                return values.copy()
+            return [unpack_values(v) for v in values]
         return {k: unpack_values(v) for k, v in obj.items() if not k.startswith("$")}
     elif isinstance(obj, list):
+        if (type(obj) is list and len(obj) >= 256
+                and all(type(v) is int for v in obj)):
+            return obj.copy()
         return [unpack_values(v) for v in obj]
     return obj
 
@@ -452,12 +464,9 @@ def extract_search_vessels(response):
             if key in data:
                 direct_candidates.append(data[key])
 
-        unpacked_data = unpack_values(data)
-        direct_candidates.append(unpacked_data)
-        if isinstance(unpacked_data, dict):
-            for key in ("SearchVessels", "Vessels", "Items", "Results"):
-                if key in unpacked_data:
-                    direct_candidates.append(unpacked_data[key])
+        # Each candidate is normalized by _valid_search_vessel_list below.
+        # Re-adding an unpacked copy checks the same collections twice, while
+        # equal-size duplicates cannot replace the first match (strict >).
 
     best = []
     for candidate in direct_candidates:
@@ -950,18 +959,29 @@ def collect_time_stacks(host, token, vessel_id, scan_times, output_dir,
     else:
         executor = ThreadPoolExecutor(max_workers=workers)
         try:
-            futures = {executor.submit(fetch_images, scan_time): scan_time
-                       for scan_time in scan_times}
-            for future in as_completed(futures):
+            # Bound completed responses as well as active requests. Submitting
+            # every scan at once lets fast responses accumulate behind planning.
+            remaining = iter(scan_times)
+            futures = {executor.submit(fetch_images, next(remaining))
+                       for _ in range(min(2 * workers, total_scans))}
+            while futures:
                 if stop_event and stop_event.is_set():
                     for pending in futures:
                         pending.cancel()
                     break
+                future = next(as_completed(futures))
+                if stop_event and stop_event.is_set():
+                    continue
                 scan_time, images, index = future.result()
+                futures.remove(future)
                 completed_scans += 1
                 if progress_callback:
                     progress_callback(vessel_id, scan_time, completed_scans, total_scans)
                 add_images(scan_time, images, index)
+                del images, index, future
+                next_scan = next(remaining, None)
+                if next_scan is not None and not (stop_event and stop_event.is_set()):
+                    futures.add(executor.submit(fetch_images, next_scan))
         finally:
             executor.shutdown(wait=True, cancel_futures=True)
 

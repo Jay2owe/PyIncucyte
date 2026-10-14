@@ -24,59 +24,50 @@ next to the images so a later stage can pick up without re-parsing filenames.
 
 import logging
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 # A library should not configure logging for its host application; this only
 # stops "No handlers could be found" warnings when nobody has set one up.
 logging.getLogger("pyincucyte").addHandler(logging.NullHandler())
 
-from .errors import (  # noqa: E402
-    ApiError,
-    AuthenticationError,
-    ConfirmationRequiredError,
-    DeviceBusyError,
-    DeviceUnreachableError,
-    HostNotSetError,
-    EncryptionUnavailableError,
-    ExportCancelled,
-    ExportError,
-    StackNotExtendable,
-    IncucyteError,
-    NotLoggedInError,
-    TokenExpiredError,
-    VesselNotFoundError,
-)
-from .models import (  # noqa: E402
-    DownloadResult,
-    ExportPlan,
-    LAYOUTS,
-    LAYOUT_AXES,
-    LAYOUT_DESCRIPTIONS,
-    LAYOUT_LABELS,
-    OutputFile,
-    ProgressEvent,
-    Vessel,
-    VesselScan,
-    human_bytes,
-    resolve_layout,
-)
-from .device import DeviceState, ScanPattern  # noqa: E402
-from .options import ExportOptions  # noqa: E402
-from .preview import PreviewImage, PreviewSet  # noqa: E402
-from .protocol import Protocol, Step, read_protocol  # noqa: E402
-from .timeline import (  # noqa: E402
-    HybridTimelineSource,
-    TimelinePreview,
-    TimelineSource,
-    choose_frames,
-)
-from .processing import Recipe, Unmixing  # noqa: E402
-from .config import ConfigStore, Credentials  # noqa: E402
-from .state import StateStore  # noqa: E402
-from .client import IncucyteClient  # noqa: E402
-from .watch import Watcher  # noqa: E402
-from .manifest import load_manifest, write_manifest  # noqa: E402
-from .engine import DEFAULT_HOST, APP_DIR  # noqa: E402
+import importlib as _importlib
+
+_EXPORT_MODULES = {
+    "errors": "ApiError AuthenticationError ConfirmationRequiredError DeviceBusyError DeviceUnreachableError HostNotSetError EncryptionUnavailableError ExportCancelled ExportError StackNotExtendable IncucyteError NotLoggedInError TokenExpiredError VesselNotFoundError",
+    "models": "DownloadResult ExportPlan LAYOUTS LAYOUT_AXES LAYOUT_DESCRIPTIONS LAYOUT_LABELS OutputFile ProgressEvent Vessel VesselScan human_bytes resolve_layout",
+    "device": "DeviceState ScanPattern",
+    "options": "ExportOptions",
+    "preview": "PreviewImage PreviewSet",
+    "protocol": "Protocol Step read_protocol",
+    "timeline": "HybridTimelineSource TimelinePreview TimelineSource choose_frames",
+    "processing": "Recipe Unmixing",
+    "config": "ConfigStore Credentials",
+    "state": "StateStore",
+    "client": "IncucyteClient",
+    "watch": "Watcher",
+    "manifest": "load_manifest write_manifest",
+    "engine": "DEFAULT_HOST APP_DIR",
+}
+_LAZY_EXPORTS = {name: module for module, names in _EXPORT_MODULES.items()
+                 for name in names.split()}
+_LAZY_MODULES = set(_EXPORT_MODULES) | {"channels", "wells", "pyramid", "cache"}
+
+
+def __getattr__(name):
+    if name in _LAZY_MODULES:
+        value = _importlib.import_module("." + name, __name__)
+        globals()[name] = value
+        return value
+    module = _LAZY_EXPORTS.get(name)
+    if module is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(_importlib.import_module("." + module, __name__), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__():
+    return sorted(set(globals()) | set(_LAZY_EXPORTS) | _LAZY_MODULES)
 
 # Import names retired in 0.3 - see pyincucyte.compat.
 from . import compat  # noqa: E402
@@ -87,6 +78,7 @@ compat.install()
 def connect(host=None, username=None, password=None, *, store=None, save=True,
             device_name=""):
     """Return a ready client - saved login by default, or fresh credentials."""
+    from . import IncucyteClient, DEFAULT_HOST
     if username and password:
         return IncucyteClient.connect(
             host or DEFAULT_HOST, username, password, store=store, save=save,

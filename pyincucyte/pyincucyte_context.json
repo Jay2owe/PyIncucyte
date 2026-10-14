@@ -1,6 +1,6 @@
 {
   "package": "pyincucyte",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "reader_contract": {
     "python": "from pyincucyte import context; context.read(topic=None, format='text')",
     "search": "context.search(query, limit=5)",
@@ -11,7 +11,7 @@
     {
       "ok": true,
       "package": "pyincucyte",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "topic": "connect-and-discover",
       "title": "Connect and identify a vessel",
       "description": "Check the instrument, list vessels, and resolve the exact plate before planning.",
@@ -27,7 +27,7 @@
     {
       "ok": true,
       "package": "pyincucyte",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "topic": "overview",
       "title": "PyIncucyte overview",
       "description": "Inspect, preview, plan, and download live-cell images from an Incucyte instrument.",
@@ -42,7 +42,7 @@
     {
       "ok": true,
       "package": "pyincucyte",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "topic": "plan-and-download",
       "title": "Plan and download images",
       "description": "Preview output count and bytes before writing a resumable download.",
@@ -58,7 +58,7 @@
     {
       "ok": true,
       "package": "pyincucyte",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "topic": "preview",
       "title": "Preview wells and channels",
       "description": "Fetch bounded thumbnails to check a vessel, well selection, channel, or processing recipe.",
@@ -74,7 +74,7 @@
     {
       "ok": true,
       "package": "pyincucyte",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "topic": "protocol",
       "title": "Read the acquisition protocol",
       "description": "Inspect the plate layout, channels, exposure/stare settings, cadence, and progress.",
@@ -90,7 +90,7 @@
     {
       "ok": true,
       "package": "pyincucyte",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "topic": "troubleshooting",
       "title": "PyIncucyte troubleshooting",
       "description": "Recognise common login, host, scan, output, and selection problems.",
@@ -107,7 +107,7 @@
     {
       "ok": true,
       "package": "pyincucyte",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "topic": "watch-once",
       "title": "Download new scans once",
       "description": "Run one resumable poll for a scheduler or repeated agent call without leaving a worker running.",

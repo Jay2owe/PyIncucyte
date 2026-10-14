@@ -1138,7 +1138,7 @@ def cmd_gui(args):
     Imported here rather than at the top of the module so the command line
     never needs Tk installed just to plan a download.
     """
-    from .gui.app import main as gui_main
+    from .gui.launcher import main as gui_main
     return gui_main()
 
 

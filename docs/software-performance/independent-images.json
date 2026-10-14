@@ -1,0 +1,131 @@
+{
+  "rows": [
+    {
+      "capability": "Gaussian contributor smoothing",
+      "case": "sigma_0.5",
+      "reference": "SciPy 1.14.1",
+      "scope": "Matched nearest edges and explicit radius; primitive only, not full vendor unmixing",
+      "status": "within_roundoff_bound",
+      "max_error": 0.01171875,
+      "tolerance": 0.23348891735076904
+    },
+    {
+      "capability": "Gaussian contributor smoothing",
+      "case": "sigma_0.5",
+      "reference": "OpenCV 4.10.0",
+      "scope": "Matched nearest edges and explicit radius; primitive only, not full vendor unmixing",
+      "status": "within_roundoff_bound",
+      "max_error": 0.015625,
+      "tolerance": 0.23348891735076904
+    },
+    {
+      "capability": "Gaussian contributor smoothing",
+      "case": "sigma_0.5",
+      "reference": "SciPy 1.14.1",
+      "scope": "Original defaults: reflect, four-sigma truncation",
+      "status": "different_definition",
+      "max_error": 17.24609375,
+      "tolerance": 0
+    },
+    {
+      "capability": "Gaussian contributor smoothing",
+      "case": "sigma_1.5",
+      "reference": "SciPy 1.14.1",
+      "scope": "Matched nearest edges and explicit radius; primitive only, not full vendor unmixing",
+      "status": "within_roundoff_bound",
+      "max_error": 0.015625,
+      "tolerance": 0.41936713457107544
+    },
+    {
+      "capability": "Gaussian contributor smoothing",
+      "case": "sigma_1.5",
+      "reference": "OpenCV 4.10.0",
+      "scope": "Matched nearest edges and explicit radius; primitive only, not full vendor unmixing",
+      "status": "within_roundoff_bound",
+      "max_error": 0.015625,
+      "tolerance": 0.41936713457107544
+    },
+    {
+      "capability": "Gaussian contributor smoothing",
+      "case": "sigma_1.5",
+      "reference": "SciPy 1.14.1",
+      "scope": "Original defaults: reflect, four-sigma truncation",
+      "status": "different_definition",
+      "max_error": 7611.765625,
+      "tolerance": 0
+    },
+    {
+      "capability": "Gaussian contributor smoothing",
+      "case": "sigma_4.0",
+      "reference": "SciPy 1.14.1",
+      "scope": "Matched nearest edges and explicit radius; primitive only, not full vendor unmixing",
+      "status": "within_roundoff_bound",
+      "max_error": 0.009765625,
+      "tolerance": 1.1711628437042236
+    },
+    {
+      "capability": "Gaussian contributor smoothing",
+      "case": "sigma_4.0",
+      "reference": "OpenCV 4.10.0",
+      "scope": "Matched nearest edges and explicit radius; primitive only, not full vendor unmixing",
+      "status": "within_roundoff_bound",
+      "max_error": 0.013671875,
+      "tolerance": 1.1711628437042236
+    },
+    {
+      "capability": "Gaussian contributor smoothing",
+      "case": "sigma_4.0",
+      "reference": "SciPy 1.14.1",
+      "scope": "Original defaults: reflect, four-sigma truncation",
+      "status": "different_definition",
+      "max_error": 7487.6953125,
+      "tolerance": 0
+    },
+    {
+      "capability": "Complete exported TIFF pixels",
+      "case": "V38_r0_c0_s0_t1_20260301T090000.tif",
+      "reference": "Pillow 12.3.0",
+      "scope": "Independent pixel decoder; proprietary input metadata not certified",
+      "status": "exact",
+      "max_error": 0,
+      "tolerance": 0
+    },
+    {
+      "capability": "Complete exported TIFF pixels",
+      "case": "V38_r0_c0_s0_t1_20260301T120000.tif",
+      "reference": "Pillow 12.3.0",
+      "scope": "Independent pixel decoder; proprietary input metadata not certified",
+      "status": "exact",
+      "max_error": 0,
+      "tolerance": 0
+    },
+    {
+      "capability": "Complete exported TIFF pixels",
+      "case": "V38_r0_c0_s0_t2_20260301T090000.tif",
+      "reference": "Pillow 12.3.0",
+      "scope": "Independent pixel decoder; proprietary input metadata not certified",
+      "status": "exact",
+      "max_error": 0,
+      "tolerance": 0
+    },
+    {
+      "capability": "Complete exported TIFF pixels",
+      "case": "V38_r0_c0_s0_t2_20260301T120000.tif",
+      "reference": "Pillow 12.3.0",
+      "scope": "Independent pixel decoder; proprietary input metadata not certified",
+      "status": "exact",
+      "max_error": 0,
+      "tolerance": 0
+    },
+    {
+      "capability": "Complete exported TIFF pixels",
+      "case": "VID38_A1_phase-green_timestack.tif",
+      "reference": "Pillow 12.3.0",
+      "scope": "Independent pixel decoder; proprietary input metadata not certified",
+      "status": "exact",
+      "max_error": 0,
+      "tolerance": 0
+    }
+  ],
+  "arrays_sha256": "e63719b6355256b1bf2564081f94334640073a7e7047c769a28c30917e262416"
+}

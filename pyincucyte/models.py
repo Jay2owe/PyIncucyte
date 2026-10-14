@@ -64,6 +64,17 @@ DEFAULT_IMAGE_BYTES = {1: 1_500_000, 2: 2_950_000, 3: 2_950_000}
 
 def json_clean(value):
     """Return strict JSON-compatible primitives without a custom encoder."""
+    # Exact builtin types can bypass abstract-number/mapping checks. Preserve
+    # subclass conversion methods and to_dict precedence through the fallback.
+    kind = type(value)
+    if kind is int:
+        return value
+    if kind is float:
+        return value if math.isfinite(value) else None
+    if kind is dict:
+        return {str(key): json_clean(item) for key, item in value.items()}
+    if kind is list:
+        return [json_clean(item) for item in value]
     if value is None or isinstance(value, (str, bool)):
         return value
     if isinstance(value, Integral):

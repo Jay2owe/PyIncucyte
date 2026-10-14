@@ -78,8 +78,15 @@ def downsample_native(array, max_edge=DEFAULT_MAX_EDGE):
 
     rows = np.arange(0, source.shape[0], factor)
     cols = np.arange(0, source.shape[1], factor)
-    work = source.astype("float64", copy=False)
-    summed = np.add.reduceat(np.add.reduceat(work, rows, axis=0), cols, axis=1)
+    if source.dtype == np.dtype('uint16') and factor <= 256:
+        # At most 256**2 uint16 values sum below uint32's maximum. The
+        # subsequent float64 division exactly matches the original mean.
+        summed = np.add.reduceat(
+            np.add.reduceat(source, rows, axis=0, dtype=np.uint32),
+            cols, axis=1, dtype=np.uint32)
+    else:
+        work = source.astype("float64", copy=False)
+        summed = np.add.reduceat(np.add.reduceat(work, rows, axis=0), cols, axis=1)
     row_counts = np.minimum(factor, source.shape[0] - rows)
     col_counts = np.minimum(factor, source.shape[1] - cols)
     averaged = summed / (row_counts[:, None] * col_counts[None, :])

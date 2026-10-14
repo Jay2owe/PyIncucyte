@@ -219,7 +219,8 @@ def response_tiles(response, expected=None):
     value = engine.unpack_values(response)
     if isinstance(value, dict) and "Data" in value:
         value = value["Data"]
-    value = engine.unpack_values(value)
+    # The first pass recursively normalizes every nested payload. Repeating
+    # it copies potentially large byte lists without changing their contents.
 
     if _looks_like_tile(value):
         items = [value]
@@ -230,7 +231,6 @@ def response_tiles(response, expected=None):
         for key in ("CompressedTiffTileData", "CompressedTiffTileDatas",
                     "Tiles", "Results", "Items", "Values"):
             candidate = _first(value, key)
-            candidate = engine.unpack_values(candidate)
             if isinstance(candidate, list):
                 items = candidate
                 break

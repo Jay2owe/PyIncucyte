@@ -10,7 +10,7 @@ import re
 from typing import Any
 
 PACKAGE = "pyincucyte"
-VERSION = "0.3.1"
+VERSION = "0.3.2"
 READER_CONTRACT = {
     "python": "from pyincucyte import context; context.read(topic=None, format='text')",
     "search": "context.search(query, limit=5)",

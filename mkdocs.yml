@@ -1,0 +1,5 @@
+site_name: PyIncucyte
+docs_dir: docs/user-guide
+site_dir: .build/docs
+nav:
+  - User guide: README.md

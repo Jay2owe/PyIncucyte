@@ -23,6 +23,32 @@ TILE_PAD = 10
 #: How many columns to start with; the grid reflows to fit the window.
 DEFAULT_COLUMNS = 3
 
+_PREPARATION_LOCK = threading.Lock()
+_PREPARATION_STARTED = False
+
+
+def prepare_preview():
+    """Prepare immutable image dependencies once, without calling Tk off-thread."""
+    global _PREPARATION_STARTED
+    with _PREPARATION_LOCK:
+        if _PREPARATION_STARTED:
+            return
+        _PREPARATION_STARTED = True
+
+    def warm():
+        try:
+            import numpy as np
+            from PIL import Image, ImageTk
+            np.percentile(np.zeros(1, dtype=np.float32), [.5, 99.5])
+        except Exception:
+            # Preparation is optional. The real feature retains its ordinary
+            # dependency/error path if the installation is incomplete.
+            import logging
+            logging.getLogger(__name__).debug("Preview preparation unavailable", exc_info=True)
+
+    threading.Thread(target=warm, name="pyincucyte-preview-prepare",
+                     daemon=True).start()
+
 #: Stable acquisition names.  Vessel-specific names remain visible in brackets,
 #: but these three labels stop a green reporter being mistaken for the red path.
 ACQUISITION_CHANNEL_LABELS = {

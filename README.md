@@ -833,3 +833,9 @@ python -m twine upload dist/*
 
 BSD 3-Clause. Copyright (c) 2026, Jamie Malcolm. Ownership is personal rather
 than lab or institute owned.
+
+## Development review
+
+[Performance changes](docs/PERFORMANCE.md) cover dataset discovery, previews and reduced export memory. Timing comparisons use synthetic workloads; live instrument throughput has not been certified.
+
+Open the example desktop with `python demo/open_app.py --reload`; run focused checks with `python -m pytest -q tests/test_performance_contracts.py`. The [offline example](demo/README.md) documents isolation and expected-answer controls.

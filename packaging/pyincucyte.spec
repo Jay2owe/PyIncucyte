@@ -30,12 +30,14 @@ frozen build lands in the right place without a code change.
 
 from pathlib import Path
 import os
+from PyInstaller.utils.hooks import collect_submodules
 
 APP_NAME = "PyIncucyte"
 SPEC_DIR = Path(SPECPATH)
 ROOT = SPEC_DIR.parent
 
 hiddenimports = [
+    *collect_submodules("pyincucyte"),
     # Loaded inside a function, so the import graph does not reach it.
     "clr",
     # Tk file dialogs and the themed widget set.

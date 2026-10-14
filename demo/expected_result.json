@@ -1,0 +1,8 @@
+{
+  "shape": [2, 2, 6, 8],
+  "dtype": "uint16",
+  "first_pixel_by_frame_channel": [[1, 2], [1, 2]],
+  "pixel_sum": 288,
+  "tolerance": 0,
+  "source": "Analytic fake-device payload: every pixel is its channel number (1 or 2), repeated at two scan times."
+}

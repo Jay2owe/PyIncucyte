@@ -40,7 +40,7 @@ from .dialogs import (
     AboutDialog, ExportSettingsDialog, LoginDialog, PlanDialog, ProtocolWindow,
     ScheduleDialog,
 )
-from .preview import PreviewWindow, TimelineWindow, preferred_preview_channel
+from .preview import PreviewWindow, TimelineWindow, preferred_preview_channel, prepare_preview
 from .widgets import Card, LogView, SearchEntry, StatusBar, WellPlate, tip
 
 GUI_STATE_FILE = APP_DIR / "gui_state.json"
@@ -126,7 +126,11 @@ EXPORT_PROMPTS = {
 class App:
     """Controller and view for the main window."""
 
-    def __init__(self, root, client=None):
+    def __init__(self, root, client=None, *, embedded=False,
+                 on_selection=None, auto_connect=True, dark=None):
+        prepare_preview()
+        self.embedded = embedded
+        self.on_selection = on_selection
         self.root = root
         self.ui_queue = queue.Queue()
         self.cancel_event = threading.Event()
@@ -151,7 +155,7 @@ class App:
 
         state = self._read_state()
         scale = theme_mod.enable_dpi_awareness()
-        self.theme = theme_mod.install(root, dark=state.get("dark"), scale=scale)
+        self.theme = theme_mod.install(root, dark=state.get("dark") if dark is None else dark, scale=scale)
         # A PreviewSet opened from a script shares this window's palette
         # rather than restyling everything with a second Theme.
         root._pyincucyte_theme = self.theme
@@ -161,12 +165,16 @@ class App:
         root.geometry("1280x880")
         root.configure(background=self.theme["bg"])
 
-        self._build_menu()
+        if not embedded:
+            self._build_menu()
+        else:
+            self.dark_mode_var = tk.BooleanVar(master=root, value=self.theme.dark)
         self._build_ui()
         self._apply_state(state)
         self._pump()
         self._tick_clock()
-        self._auto_connect()
+        if auto_connect:
+            self._auto_connect()
 
     # ==================================================================
     # construction
@@ -886,7 +894,7 @@ class App:
                 pass
             except Exception as exc:
                 self.log.write(f"UI error: {exc}", "error")
-        self.root.after(60, self._pump)
+        self.root.after(16, self._pump)
 
     def say(self, message, level="info"):
         """Log from any thread."""
@@ -1596,6 +1604,9 @@ class App:
 
     def _request_export_options(self, action):
         """Show the action-specific settings checkpoint and return its options."""
+        if getattr(self, "embedded", False):
+            self.on_selection(action == "sync")
+            return None
         prompt = EXPORT_PROMPTS[action]
         previous = self._export_values()
         dialog = ExportSettingsDialog(
@@ -2228,7 +2239,7 @@ class App:
 
     def _apply_state(self, state):
         geometry = state.get("geometry")
-        if geometry:
+        if geometry and not getattr(self, "embedded", False):
             try:
                 self.root.geometry(geometry)
             except tk.TclError:
@@ -2258,6 +2269,8 @@ class App:
             self._refresh_device_choices(state["host"])
 
     def _save_state(self):
+        if getattr(self, "embedded", False):
+            return
         try:
             options = self._current_options().to_dict()
         except Exception:
@@ -2279,9 +2292,8 @@ class App:
             "wells": wells,
         }
         try:
-            GUI_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-            GUI_STATE_FILE.write_text(json.dumps(payload, indent=2),
-                                      encoding="utf-8")
+            from .._atomic import write_json
+            write_json(GUI_STATE_FILE, payload)
         except OSError:
             pass
 
@@ -2305,14 +2317,7 @@ def _processing_value(text):
     return "" if value.lower() in ("", PROCESSING_OFF) else value
 
 
-def main():
-    """Launch the desktop app."""
-    theme_mod.enable_dpi_awareness()
-    root = tk.Tk()
-    app = App(root)
-    root.protocol("WM_DELETE_WINDOW", app.on_close)
-    root.mainloop()
-    return 0
+from .launcher import main
 
 
 if __name__ == "__main__":

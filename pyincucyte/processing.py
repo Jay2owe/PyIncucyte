@@ -544,7 +544,30 @@ def _calibrated(array, scale, bias):
     """Raw camera counts to calibrated units (GCU/RCU)."""
     import numpy as np
 
-    return (np.asarray(array, dtype="float32") - float(bias)) / float(scale)
+    # Own the buffer: callers may pass a read-only array or a cached frame.
+    # Preserve the original float32 subtraction then division, in that order.
+    result = np.array(array, dtype="float32", copy=True)
+    if result.ndim == 0 or np.result_type(result, float(bias), float(scale)) != result.dtype:
+        return (result - float(bias)) / float(scale)
+    np.subtract(result, float(bias), out=result)
+    np.divide(result, float(scale), out=result)
+    return result[()] if result.ndim == 0 else result
+
+
+def _subtract_owned(array, value):
+    """Reuse owned storage only when ordinary subtraction keeps its dtype."""
+    import numpy as np
+    if (isinstance(array, np.ndarray) and array.ndim > 0
+            and np.result_type(array, value) == array.dtype):
+        return np.subtract(array, value, out=array)
+    return array - value
+
+
+def _clip_owned(array, minimum, maximum):
+    """Preserve NumPy's scalar return convention as well as array values."""
+    import numpy as np
+    out = array if isinstance(array, np.ndarray) and array.ndim > 0 else None
+    return np.clip(array, minimum, maximum, out=out)
 
 
 def _blur(array, sigma):
@@ -565,6 +588,9 @@ def _blur(array, sigma):
     kernel = np.exp(-(offsets ** 2) / (2.0 * sigma * sigma))
     kernel /= kernel.sum()
 
+    # Every tap has the same shape and dtype. Reuse its multiplication buffer
+    # while preserving the original float32 multiply/add order and edge rule.
+    weighted = np.empty_like(data)
     for axis in (0, 1):
         pad = [(0, 0), (0, 0)]
         pad[axis] = (radius, radius)
@@ -573,7 +599,8 @@ def _blur(array, sigma):
         for index, weight in enumerate(kernel):
             window = [slice(None), slice(None)]
             window[axis] = slice(index, index + data.shape[axis])
-            blurred += weight * padded[tuple(window)]
+            np.multiply(weight, padded[tuple(window)], out=weighted)
+            np.add(blurred, weighted, out=blurred)
         data = blurred
     return data
 
@@ -593,12 +620,12 @@ def apply(array, plan, fetch_contributor=None):
     scale, bias = plan["scale"], plan["bias"]
     calibrate = bool(plan.get("calibrate"))
     working = (_calibrated(array, scale, bias) if calibrate
-               else np.asarray(array, dtype="float32"))
+               else np.array(array, dtype="float32", copy=True))
 
     background = float(plan.get("background") or 0.0)
     if background:
-        working = working - (_calibrated(background, scale, bias)
-                             if calibrate else background)
+        working = _subtract_owned(working, _calibrated(background, scale, bias)
+                                  if calibrate else background)
 
     for term in plan.get("unmix") or ():
         if fetch_contributor is None:
@@ -618,20 +645,21 @@ def apply(array, plan, fetch_contributor=None):
                        if calibrate else other.astype("float32"))
         their_background = float(term.get("background") or 0.0)
         if their_background:
-            contributor = contributor - (
+            contributor = _subtract_owned(contributor,
                 _calibrated(their_background, term["scale"], term["bias"])
                 if calibrate else their_background)
-        working = working - term["ratio"] * _blur(contributor, term["sigma"])
+        working = _subtract_owned(working, term["ratio"] * _blur(contributor, term["sigma"]))
 
     # A negative pixel means a coefficient was too big; it is never signal.
-    working = np.clip(working, 0, None)
+    working = _clip_owned(working, 0, None)
 
     if calibrate:
         return working.astype("float32", copy=False)
     original = np.asarray(array).dtype
     if np.issubdtype(original, np.integer):
         ceiling = np.iinfo(original).max
-        return np.clip(working, 0, ceiling).astype(original, copy=False)
+        working = _clip_owned(working, 0, ceiling)
+        return working.astype(original, copy=False)
     return working.astype(original, copy=False)
 
 

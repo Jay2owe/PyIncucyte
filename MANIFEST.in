@@ -1,3 +1,8 @@
 include README_AI.md
 include pyincucyte_context.json
 recursive-include pyincucyte README_AI.md pyincucyte_context.json
+
+recursive-include demo *.py *.json *.md
+include docs/software-performance/independent-images.json
+include docs/software-performance/independent-image-arrays.npz
+recursive-include scripts *.py *.txt

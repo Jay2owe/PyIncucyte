@@ -71,7 +71,7 @@ class GuiFromTheCommandLineTests(unittest.TestCase):
                 self.assertNotIn(".gui", line)
 
     def test_gui_launches_the_app(self):
-        with mock.patch("pyincucyte.gui.app.main", return_value=0) as launched:
+        with mock.patch("pyincucyte.gui.launcher.main", return_value=0) as launched:
             self.assertEqual(cli.cmd_gui(cli.parse_args(["gui"])), 0)
         launched.assert_called_once_with()
 

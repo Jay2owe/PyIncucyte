@@ -558,10 +558,8 @@ class ExportOptions:
 
     def save(self, path):
         """Write this recipe as a JSON preset."""
-        path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(self.to_dict(), indent=2), encoding="utf-8")
-        return path
+        from ._atomic import write_json
+        return write_json(path, self.to_dict())
 
     @classmethod
     def load(cls, path):

@@ -5,7 +5,7 @@
 Every release uses one clean source commit and one matching `v<version>` tag.
 The version comes from `pyproject.toml`; the frozen application, installer,
 wheel, and source distribution must carry the same version. The current
-working version is `0.3.1`.
+working version is `0.3.2`.
 
 ## Required release set
 
@@ -67,3 +67,5 @@ python scripts/build_release.py --out C:\PyIncucyte-Releases --allow-dirty
 ```
 
 The candidate command stops before publication.
+
+<!-- deploy-required-channels: ["pypi", "github-windows"] -->
