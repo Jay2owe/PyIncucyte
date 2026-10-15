@@ -146,7 +146,7 @@ class WellPlate(ttk.Frame):
     """
 
     def __init__(self, parent, theme, rows=8, cols=12, on_change=None,
-                 min_cell=13, max_cell=30, **kwargs):
+                 min_cell=13, max_cell=None, **kwargs):
         super().__init__(parent, style="Surface.TFrame", **kwargs)
         self.theme = theme
         self.rows = rows
@@ -168,7 +168,7 @@ class WellPlate(ttk.Frame):
             background=theme["surface"], cursor="hand2")
         self.canvas.pack(fill="both", expand=True)
 
-        self.canvas.bind("<Configure>", lambda e: self.redraw())
+        self.canvas.bind("<Configure>", self._on_resize)
         self.canvas.bind("<Button-1>", self._on_press)
         self.canvas.bind("<B1-Motion>", self._on_drag)
         self.canvas.bind("<ButtonRelease-1>", self._on_release)
@@ -236,43 +236,58 @@ class WellPlate(ttk.Frame):
             self.canvas.winfo_width() or 480)
         return int(top + self.rows * (cell + gap) + gap)
 
+    def _label_margin(self):
+        return max(20, int(16 * self.theme.scale))
+
     def _compute_geometry(self, width, height=None):
-        label = max(16, int(11 * self.theme.scale))
-        usable = max(60, width - label - 8)
+        label = self._label_margin()
         gap = 2
-        cell = int((usable - gap * (self.cols + 1)) / max(1, self.cols))
-        cell = max(self.min_cell, min(self.max_cell, cell))
-        if height is not None and height > label + gap:
-            vertical = int(
-                (height - label - gap * (self.rows + 1)) / max(1, self.rows))
-            # A compact window must show every well, even when that requires
-            # going below the normal mouse-target size.
-            cell = max(8, min(cell, vertical))
-        # Centre the plate when it does not fill the card, so a 6-well vessel
-        # does not sit in the corner of a wide panel.
+        cell = (width - label - gap * (self.cols + 1)) // max(1, self.cols)
+        if self.max_cell is not None:
+            cell = min(self.max_cell, cell)
+        if height is not None:
+            cell = min(cell, (height - label - gap * (self.rows + 1)) // max(1, self.rows))
+        # Fill the available space with square wells; shrink for dense plates.
+        cell = max(1, int(cell))
         plate_width = self.cols * (cell + gap) + gap
-        left = label + gap + max(0, (usable - plate_width) // 2)
-        return cell, gap, left, label + gap
+        plate_height = self.rows * (cell + gap) + gap
+        left = label + gap + max(0, (width - label - plate_width - gap) // 2)
+        top = label + gap
+        if height is not None:
+            top += max(0, (height - label - plate_height - gap) // 2)
+        return cell, gap, left, top
+
+    def _on_resize(self, event):
+        geometry = self._compute_geometry(event.width, event.height)
+        cell, gap, left, top = geometry
+        old_cell, old_gap, old_left, old_top = self._geometry
+        if self._cell_ids and (cell, gap) == (old_cell, old_gap):
+            # Preserve canvas items while the unchanged plate is recentered.
+            self.canvas.move("all", left - old_left, top - old_top)
+            self._geometry = geometry
+            height = int(top + self.rows * (cell + gap) + gap)
+            self.canvas.configure(scrollregion=(0, 0, event.width, height))
+        else:
+            self.redraw()
 
     def redraw(self):
         canvas = self.canvas
-        canvas.delete("all")
-        self._cell_ids = {}
         width = canvas.winfo_width()
         if width <= 1:
-            self.after(30, self.redraw)
-            return
+            return  # The first Configure event paints once the canvas is mapped.
+        canvas.delete("all")
+        self._cell_ids = {}
 
         c = self.theme.colors
         cell, gap, left, top = self._compute_geometry(
             width, canvas.winfo_height())
         self._geometry = (cell, gap, left, top)
-        font = (self.theme.family, max(6, int(cell * 0.42)))
-        label_width = max(16, int(11 * self.theme.scale))
+        font = (self.theme.family, max(6, min(round(10 * self.theme.scale), round(cell * 0.36))))
+        label_width = self._label_margin()
 
         for col in range(self.cols):
             x = left + col * (cell + gap) + cell / 2
-            canvas.create_text(x, top / 2, text=str(col + 1), font=font,
+            canvas.create_text(x, top - gap - label_width / 2, text=str(col + 1), font=font,
                                fill=c["grid_label"], tags=("colhead", f"col{col}"))
         for row in range(self.rows):
             y = top + row * (cell + gap) + cell / 2
@@ -340,11 +355,11 @@ class WellPlate(ttk.Frame):
         cell, gap, left, top = self._geometry
         if not cell:
             return None
-        if y < top and x >= left:
+        label_width = self._label_margin()
+        if top - gap - label_width <= y < top and x >= left:
             col = int((x - left) // (cell + gap))
             if 0 <= col < self.cols:
                 return ("col", col)
-        label_width = max(16, int(11 * self.theme.scale))
         if left - gap - label_width <= x < left and y >= top:
             row = int((y - top) // (cell + gap))
             if 0 <= row < self.rows:

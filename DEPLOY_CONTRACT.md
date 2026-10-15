@@ -5,7 +5,7 @@
 Every release uses one clean source commit and one matching `v<version>` tag.
 The version comes from `pyproject.toml`; the frozen application, installer,
 wheel, and source distribution must carry the same version. The current
-working version is `0.3.2`.
+working version is `0.4.0`.
 
 ## Required release set
 

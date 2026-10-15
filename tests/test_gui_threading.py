@@ -193,7 +193,7 @@ class VesselAndWellsPanelTests(unittest.TestCase):
 
         self.assertIsNone(app.active_vessel)
         app.wells_card.set_body_visible.assert_called_once_with(False)
-        app.left_column.rowconfigure.assert_any_call(0, weight=1)
+        app.left_column.rowconfigure.assert_any_call(0, weight=4)
         app.left_column.rowconfigure.assert_any_call(1, weight=0)
         app.wells_card.grid_configure.assert_called_once_with(sticky="new")
         app._refresh_summary.assert_called_once_with()
@@ -219,8 +219,8 @@ class VesselAndWellsPanelTests(unittest.TestCase):
 
         self.assertEqual(app.active_vessel, 38)
         app.wells_card.set_body_visible.assert_called_once_with(True)
-        app.left_column.rowconfigure.assert_any_call(0, weight=0)
-        app.left_column.rowconfigure.assert_any_call(1, weight=1)
+        app.left_column.rowconfigure.assert_any_call(0, weight=4)
+        app.left_column.rowconfigure.assert_any_call(1, weight=0)
         app.wells_card.grid_configure.assert_called_once_with(sticky="nsew")
         app.plate.configure_plate.assert_called_once()
 
@@ -675,3 +675,15 @@ class DeviceWriteTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_planning_completion_cannot_clear_a_new_downloads_busy_state():
+    from unittest.mock import Mock
+    app=App.__new__(App)
+    planning=object();downloading=object()
+    app.worker=downloading
+    app._finish_work=Mock()
+    App._finish_worker(app,planning)
+    app._finish_work.assert_not_called()
+    App._finish_worker(app,downloading)
+    app._finish_work.assert_called_once_with()

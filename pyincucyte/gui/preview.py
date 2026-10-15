@@ -15,6 +15,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from .. import channels as channel_mod
 from . import theme as theme_mod
+from .presentation import ChannelButtons, FrameSlider
 from .widgets import tip
 
 #: Space around and between tiles, in pixels.
@@ -235,7 +236,7 @@ class PreviewWindow(tk.Toplevel):
         for number, label in self._channel_options:
             ttk.Radiobutton(
                 selectors, text=label, value=number,
-                variable=self.channel_var, command=self._on_channel_change).pack(
+                variable=self.channel_var, command=self._on_channel_change, style="Channel.Toolbutton").pack(
                     side="left", padx=(0, theme_mod.PAD_M))
 
         stack = ttk.Frame(self, style="Toolbar.TFrame")
@@ -657,7 +658,7 @@ class TimelineWindow(tk.Toplevel):
         self.bind("<space>", lambda _event: self._toggle_play())
 
         self._build()
-        self.geometry("720x680")
+        self.geometry("1000x820")
         self.minsize(520, 480)
         self._poll_job = self.after(40, self._poll_results)
         self._request_current()
@@ -700,7 +701,7 @@ class TimelineWindow(tk.Toplevel):
         well.grid(row=0, column=1, sticky="ew", padx=(theme_mod.PAD_XS,
                                                        theme_mod.PAD_M))
         ttk.Label(selectors, text="Channel").grid(row=0, column=2, sticky="w")
-        channel = ttk.Combobox(
+        channel = ChannelButtons(
             selectors, textvariable=self.channel_var,
             values=list(self._channels_by_label), state="readonly", width=16)
         channel.grid(row=0, column=3, sticky="ew", padx=(theme_mod.PAD_XS,
@@ -724,19 +725,18 @@ class TimelineWindow(tk.Toplevel):
                         lambda _event: self._request_current())
 
         body = ttk.Frame(self, style="Card.TFrame", padding=theme_mod.PAD_S)
-        body.pack(side="top", fill="both", expand=True,
-                  padx=theme_mod.PAD_M, pady=(0, theme_mod.PAD_S))
+        # The expanding image is packed after playback and status below.
         self.canvas = tk.Canvas(body, background=self.theme["surface"],
                                 highlightthickness=0, borderwidth=0)
         self.canvas.pack(fill="both", expand=True)
         self._image_item = self.canvas.create_image(0, 0, anchor="center")
         self._message_item = self.canvas.create_text(
-            0, 0, text="Loading...", fill=self.theme["muted"],
+            0, 0, text="Loading...", fill=self.theme["text_muted"],
             anchor="center", justify="center")
         self.canvas.bind("<Configure>", self._centre_canvas)
 
         controls = ttk.Frame(self, padding=(theme_mod.PAD_M, theme_mod.PAD_XS))
-        controls.pack(side="top", fill="x")
+        controls.pack(side="bottom", fill="x")
         ttk.Button(controls, text="Previous", command=lambda: self._step(-1)).pack(
             side="left")
         self.play_button = ttk.Button(controls, text="Play",
@@ -745,8 +745,8 @@ class TimelineWindow(tk.Toplevel):
         ttk.Button(controls, text="Next", command=lambda: self._step(1)).pack(
             side="left")
         self.position_var = tk.IntVar(value=0)
-        self.slider = ttk.Scale(
-            controls, from_=0, to=max(0, self.source.frame_count - 1),
+        self.slider = FrameSlider(
+            controls, theme=self.theme, from_=0, to=max(0, self.source.frame_count - 1),
             variable=self.position_var, command=self._on_slider)
         self.slider.pack(side="left", fill="x", expand=True,
                          padx=theme_mod.PAD_M)
@@ -760,6 +760,7 @@ class TimelineWindow(tk.Toplevel):
         self.status_var = tk.StringVar(value=self.timeline.summary())
         ttk.Label(status, textvariable=self.status_var,
                   style="Muted.TLabel").pack(side="left")
+        body.pack(side="top", fill="both", expand=True)
 
     def _selection(self):
         return (self.well_var.get(),
@@ -774,6 +775,18 @@ class TimelineWindow(tk.Toplevel):
         centre = (max(1, width) // 2, max(1, height) // 2)
         self.canvas.coords(self._image_item, *centre)
         self.canvas.coords(self._message_item, *centre)
+        self._fit_image()
+
+    def _fit_image(self):
+        if self.current_array is None:
+            return
+        from PIL import Image, ImageTk
+        image=Image.fromarray(self.current_array)
+        width,height=max(1,self.canvas.winfo_width()),max(1,self.canvas.winfo_height())
+        factor=min(width/image.width,height/image.height)
+        image=image.resize((max(1,int(image.width*factor)),max(1,int(image.height*factor))),Image.Resampling.LANCZOS)
+        self.photo=ImageTk.PhotoImage(image,master=self)
+        self.canvas.itemconfigure(self._image_item,image=self.photo)
 
     def _invalidate(self):
         self._generation += 1
@@ -848,8 +861,7 @@ class TimelineWindow(tk.Toplevel):
                     self.status_var.set(error)
                     continue
                 self.current_array = array
-                self.photo = _photo_image(array, master=self)
-                self.canvas.itemconfigure(self._image_item, image=self.photo)
+                self._fit_image()
                 self.canvas.itemconfigure(self._message_item, state="hidden")
                 source = info.source if info is not None else "preview"
                 size = info.source_bytes if info is not None else 0

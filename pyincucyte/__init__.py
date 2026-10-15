@@ -24,7 +24,7 @@ next to the images so a later stage can pick up without re-parsing filenames.
 
 import logging
 
-__version__ = "0.3.2"
+__version__ = "0.4.0"
 
 # A library should not configure logging for its host application; this only
 # stops "No handlers could be found" warnings when nobody has set one up.

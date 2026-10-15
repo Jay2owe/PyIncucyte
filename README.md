@@ -1,5 +1,7 @@
 # PyIncucyte
 
+The desktop uses a compact fixed workspace: vessels and actions on the left, with a well map that expands to fill the available space on the right. Well cells stay square, and dense plates shrink to remain visible.
+
 Download images off an Incucyte live-cell imaging system — from a desktop app, a
 command line, or a Python script. It replaces click-by-click downloading with a
 tool that knows what it already has and fetches only what is new.

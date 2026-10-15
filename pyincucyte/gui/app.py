@@ -36,6 +36,7 @@ from .. import cli as cli_mod
 from .. import schedule as schedule_mod
 from ..wells import well_name, well_spec
 from . import theme as theme_mod
+from .presentation import arrange_workspace
 from .dialogs import (
     AboutDialog, ExportSettingsDialog, LoginDialog, PlanDialog, ProtocolWindow,
     ScheduleDialog,
@@ -311,6 +312,7 @@ class App:
         for region in ("bottom_left", "bottom_right"):
             for build_panel in panels[region]:
                 build_panel(workspace)
+        arrange_workspace(workspace, self.vessel_tree)
 
     def _main_panel_builders(self):
         """The space-owning panels; export settings and activity stay off-canvas."""
@@ -422,8 +424,7 @@ class App:
                   style="Accent.TLabel").pack(side="right")
 
         body = card.body
-        self.plate = WellPlate(body, self.theme, on_change=self._on_wells_changed,
-                               max_cell=30)
+        self.plate = WellPlate(body, self.theme, on_change=self._on_wells_changed)
         tip(self.plate,
             "Click a well to toggle it, drag to paint, shift-click for a block, "
             "and click a row letter or column number to flip a whole line.",
@@ -474,9 +475,10 @@ class App:
         """Reveal the plate only when there is a vessel to give it meaning."""
         expanded = bool(expanded)
         self.wells_card.set_body_visible(expanded)
-        self.left_column.rowconfigure(0, weight=0 if expanded else 1)
-        self.left_column.rowconfigure(1, weight=1 if expanded else 0)
-        self.wells_card.grid_configure(sticky="nsew" if expanded else "new")
+        if getattr(self.left_column, "_fixed_workspace", False) is not True:
+            self.left_column.rowconfigure(0, weight=4)
+            self.left_column.rowconfigure(1, weight=0)
+            self.wells_card.grid_configure(sticky="nsew" if expanded else "new")
         if not expanded:
             self.wells_card.set_title("WELLS")
             self.well_count_var.set("Select a vessel to show wells")
@@ -923,7 +925,13 @@ class App:
         except Exception as exc:
             self.say(f"Unexpected error: {exc}", "error")
         finally:
-            self._post(self._finish_work)
+            self._post(self._finish_worker, threading.current_thread())
+
+    def _finish_worker(self, completed_worker):
+        # Planning can hand the UI to a newer download worker before its own
+        # queued completion arrives. Only the current worker owns busy state.
+        if completed_worker is self.worker:
+            self._finish_work()
 
     def _set_busy(self, busy):
         self.busy = busy

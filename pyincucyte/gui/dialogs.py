@@ -9,6 +9,7 @@ from ..engine import APP_DIR
 from ..models import LAYOUT_DESCRIPTIONS, LAYOUT_LABELS, human_bytes
 from ..schedule import CADENCES, DEFAULT_CADENCE
 from . import theme as theme_mod
+from .presentation import section_form, scroll_settings, instrument_panel, settings_help, draw_protocol
 from .widgets import Card, tip
 
 
@@ -26,6 +27,14 @@ class ModalDialog(tk.Toplevel):
         self.resizable(resizable, resizable)
         self.protocol("WM_DELETE_WINDOW", self.cancel)
         self.bind("<Escape>", lambda e: self.cancel())
+
+    def destroy(self):
+        super().destroy()
+        # Release dialog-owned Tcl variables on the UI thread. A later worker
+        # garbage collection must never be the first to dispose of them.
+        for name, value in tuple(vars(self).items()):
+            if isinstance(value, tk.Variable):
+                setattr(self, name, None)
 
     def cancel(self):
         self.result = None
@@ -115,6 +124,7 @@ class LoginDialog(ModalDialog):
         self.login_btn.pack(side="left")
 
         body.columnconfigure(1, weight=1)
+        instrument_panel(body, theme, "Incucyte", plate=True)
         self.bind("<Return>", lambda e: self._submit())
         first = "Password" if self.username_var.get() else "Username"
         self.after(60, self.entries[first].focus_set)
@@ -177,21 +187,9 @@ class ExportSettingsDialog(ModalDialog):
 
         ttk.Label(body, text=title, style="Title.TLabel").grid(
             row=0, column=0, sticky="w")
-        ttk.Label(body, text=description, style="Muted.TLabel",
-                  wraplength=820, justify="left").grid(
-            row=1, column=0, sticky="w", pady=(2, theme_mod.PAD_M))
-
-        banner = tk.Frame(body, background=theme[f"{tone}_soft"],
-                          padx=theme_mod.PAD_M, pady=theme_mod.PAD_S)
-        banner.grid(row=2, column=0, sticky="ew",
-                    pady=(0, theme_mod.PAD_L))
-        tk.Label(banner, text=mode_label, background=theme[f"{tone}_soft"],
-                 foreground=theme[tone], font=theme.font_bold).pack(
-            anchor="w")
-        tk.Label(banner, text=note, background=theme[f"{tone}_soft"],
-                 foreground=theme["text"], font=theme.font,
-                 wraplength=850, justify="left").pack(
-            anchor="w", pady=(theme_mod.PAD_XS, 0))
+        help_label = ttk.Label(body, text=mode_label, style="Accent.TLabel")
+        help_label.grid(row=1, column=0, sticky="w", pady=(4, 12))
+        tip(help_label, description + " " + note, theme)
 
         buttons = ttk.Frame(body, style="Surface.TFrame")
         buttons.grid(row=4, column=0, sticky="ew",
@@ -202,14 +200,14 @@ class ExportSettingsDialog(ModalDialog):
         ttk.Button(buttons, text="Cancel", command=self.cancel).grid(
             row=0, column=2, padx=(theme_mod.PAD_S, 0))
 
-        form = ttk.Frame(body, style="Surface.TFrame")
-        form.grid(row=3, column=0, sticky="nsew")
-        form.grid_propagate(False)
+        viewport, form = scroll_settings(body, theme)
+        viewport.grid(row=3, column=0, sticky="nsew")
         build_form(form)
+        section_form(form, theme)
 
         # Deliberately no Return binding: starting an export must require the
         # visible confirmation button, even when a menu was opened by keyboard.
-        self.minsize(*minimum_size)
+        self.minsize(740, 540)
 
     def _accept(self):
         options = self.validate(self)
@@ -406,6 +404,9 @@ class ScheduleDialog(ModalDialog):
         # REGRESSION GUARD: when a menu item was activated with Enter, binding
         # Return here could accept the new dialog before the user saw it.
         # Creation is deliberately limited to the visible button.
+        settings_help(body, theme)
+        self.resizable(True, True)
+        self.minsize(640, 420)
         self.after(60, self.name_entry.focus_set)
 
     def _accept(self):
@@ -454,49 +455,39 @@ class ProtocolWindow(tk.Toplevel):
         self.protocol("WM_DELETE_WINDOW", self.destroy)
         self.bind("<Escape>", lambda e: self.destroy())
 
-        card = Card(self, theme=theme)
-        card.pack(fill="both", expand=True, padx=theme_mod.PAD_L,
-                  pady=theme_mod.PAD_L)
-        body = card.body
+        header = ttk.Frame(self, style="Toolbar.TFrame", padding=12)
+        header.pack(fill="x")
+        ttk.Label(header, text="Acquisition protocol", style="Heading.TLabel").pack(side="left")
+        ttk.Button(header, text="Close", command=self.destroy).pack(side="right")
+        ttk.Button(header, text="Save drawing...", style="Accent.TButton", command=self._save).pack(side="right", padx=8)
+        ttk.Button(header, text="Copy details", command=self._copy).pack(side="right")
+        self.dark_var = tk.BooleanVar(value=theme.dark)
+        ttk.Checkbutton(header, text="Dark export", variable=self.dark_var).pack(side="right", padx=8)
+        controls=ttk.Frame(self,style="Toolbar.TFrame",padding=(12,0,12,8))
+        controls.pack(fill="x")
+        self.zoom=1.0
+        ttk.Button(controls,text="Fit width",command=lambda:self._zoom(0)).pack(side="left")
+        ttk.Button(controls,text="-",width=3,command=lambda:self._zoom(-.15)).pack(side="left",padx=4)
+        ttk.Button(controls,text="+",width=3,command=lambda:self._zoom(.15)).pack(side="left")
+        body=ttk.Frame(self)
+        body.pack(fill="both",expand=True)
+        self.canvas=tk.Canvas(body,highlightthickness=0,bd=0,background=theme["bg"])
+        xbar=ttk.Scrollbar(body,orient="horizontal",command=self.canvas.xview)
+        ybar=ttk.Scrollbar(body,orient="vertical",command=self.canvas.yview)
+        xbar.pack(side="bottom",fill="x");ybar.pack(side="right",fill="y")
+        self.canvas.pack(fill="both",expand=True)
+        self.canvas.configure(xscrollcommand=xbar.set,yscrollcommand=ybar.set)
+        self.canvas.bind("<Configure>",lambda e:self._redraw())
+        self.geometry("1000x740");self.minsize(640,480)
+        self.after_idle(self._redraw)
 
-        ttk.Label(body, text="How this run was set up",
-                  style="Title.TLabel").pack(anchor="w")
-        ttk.Label(body, style="Muted.TLabel", wraplength=760,
-                  text="Read off the instrument's own metadata - no image was "
-                       "fetched. Requested and achieved are different facts "
-                       "and both are on the drawing.").pack(
-            anchor="w", pady=(2, theme_mod.PAD_L))
+    def _zoom(self, delta):
+        self.zoom=1.0 if not delta else max(.65,min(2,self.zoom+delta))
+        self._redraw()
 
-        text = tk.Text(body, wrap="none", bd=0, highlightthickness=1,
-                       background=theme["surface_alt"], foreground=theme["text"],
-                       highlightbackground=theme["border"],
-                       font=theme.font_mono, height=26, width=self.WIDTH + 2,
-                       padx=theme_mod.PAD_M, pady=theme_mod.PAD_M)
-        text.pack(fill="both", expand=True)
-        text.insert("1.0", "\n".join(protocol.lines(width=self.WIDTH)))
-        text.configure(state="disabled")
-        self.text = text
-
-        buttons = ttk.Frame(body, style="Surface.TFrame")
-        buttons.pack(fill="x", pady=(theme_mod.PAD_L, 0))
-        self.dark_var = tk.BooleanVar(value=False)
-        dark = ttk.Checkbutton(buttons, text="Dark drawing",
-                               variable=self.dark_var)
-        dark.pack(side="left")
-        tip(dark, "Save the figure on a dark background, for a dark slide.",
-            theme)
-        save_btn = ttk.Button(buttons, text="Save drawing...",
-                              style="Accent.TButton", command=self._save)
-        save_btn.pack(side="right")
-        tip(save_btn,
-            "SVG needs nothing and scales; PNG and PDF need matplotlib, which "
-            "the packaged app does not ship.", theme)
-        ttk.Button(buttons, text="Copy", command=self._copy).pack(
-            side="right", padx=(0, theme_mod.PAD_S))
-        ttk.Button(buttons, text="Close", command=self.destroy).pack(
-            side="right", padx=(0, theme_mod.PAD_S))
-
-        self.minsize(700, 520)
+    def _redraw(self):
+        from ..protocol import layout
+        draw_protocol(self.canvas,self.protocol_record,self.theme,layout,self.zoom)
 
     def _copy(self):
         self.clipboard_clear()

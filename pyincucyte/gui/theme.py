@@ -150,7 +150,7 @@ class Theme:
         self.font = (base, 9)
         self.font_bold = (base, 9, "bold")
         self.font_small = (base, 8)
-        self.font_title = (base, 15, "bold")
+        self.font_title = (base, 18, "bold")
         self.font_heading = (base, 10, "bold")
         self.font_value = (base, 11, "bold")
         self.font_mono = (mono, 9)
@@ -170,7 +170,6 @@ class Theme:
     def apply(self):
         c = self.colors
         root, style = self.root, self.style
-
         root.configure(background=c["bg"])
         try:
             style.theme_use("clam")   # the only built-in theme that restyles fully
@@ -378,6 +377,21 @@ class Theme:
         style.configure("Horizontal.TScrollbar", background=c["surface_alt"],
                         troughcolor=c["bg"], bordercolor=c["bg"],
                         arrowcolor=c["text_muted"])
+
+        style.configure("Channel.Toolbutton", padding=(12, 6),
+                        background=c["surface_alt"], foreground=c["text_muted"],
+                        font=self.font_bold, relief="flat", borderwidth=0)
+        style.map("Channel.Toolbutton", background=[("selected",c["accent_soft"]), ("active",c["surface_alt"])],
+                  foreground=[("selected",c["accent"]), ("active",c["text"])])
+        style.configure("Choice.TRadiobutton", padding=(10, 6), background=c["surface_alt"])
+
+
+        style.configure("Settings.TNotebook", background=c["surface"], borderwidth=0, tabmargins=(0,8,0,12))
+        style.configure("Settings.TNotebook.Tab", background=c["surface_alt"], foreground=c["text_muted"],
+                        font=self.font_bold, padding=(20,12), borderwidth=0, relief="flat")
+        style.map("Settings.TNotebook.Tab",padding=[("selected",(20,12)),("!selected",(20,12))],
+                  expand=[("selected",(0,0,0,0)),("!selected",(0,0,0,0))],background=[("selected",c["accent_soft"]),("active",c["surface_alt"])],
+                  foreground=[("selected",c["accent"]),("active",c["text"])])
 
     # -- helpers ----------------------------------------------------------
 
